@@ -202,3 +202,172 @@ Training and evaluation require the prepared dataset at the configured path. The
 - Review control/recovery errors with domain expertise and confirm labels for ambiguous images.
 - Treat the displayed softmax score as model confidence, not calibrated probability or a clinical conclusion.
 - Update the project title or dataset if the intended scope is specifically corneal-image analysis; the current model and examples concern cell-state fluorescence microscopy.
+
+## Detailed setup and run guide
+
+This guide covers a fresh setup on Windows or Linux. You do **not** need the original training dataset to run the browser demo. You do need the trained checkpoint, `best_model.pt`, in the project root. Training and evaluation scripts do require the prepared dataset described earlier.
+
+### Prerequisites
+
+- **Python 3.11** is recommended. The project requires Python 3.11 or newer; the checked-in lock file includes compatible Python 3.11 and 3.12 packages.
+- **Git**, if you are cloning the project. If you already have the project folder, Git is optional.
+- An internet connection for installing Python packages.
+- A web browser such as Firefox, Chrome, Edge, or Safari.
+- Enough free disk space for PyTorch and its dependencies. Installation may take several gigabytes, especially with the CUDA-enabled PyTorch packages in the lock file.
+- **NVIDIA GPU and a compatible driver are optional.** The server uses CUDA when available and otherwise runs inference on the CPU. With the locked CUDA-enabled PyTorch build, a compatible NVIDIA driver is needed to use the GPU; a separate CUDA Toolkit is not required just to run this project.
+
+The package manager used below is **uv**, which reads this repository's `uv.lock` and PyTorch CUDA 12.1 package configuration. The virtual environment keeps project dependencies separate from system Python.
+
+### 1. Get the project files
+
+If you are cloning the project, open PowerShell or a terminal and run:
+
+```bash
+git clone <your-repository-url>
+cd momo
+```
+
+If you already have the project folder, open a terminal in that folder instead. Confirm that `app.py`, `config.py`, `best_model.pt`, `pyproject.toml`, and `uv.lock` are present.
+
+### 2. Install Python
+
+Install Python 3.11 for your operating system if it is not already installed.
+
+**Windows:** install Python 3.11 from [python.org](https://www.python.org/downloads/). In the installer, enable **Add Python to PATH**. Verify it in a new PowerShell window:
+
+```powershell
+py -3.11 --version
+```
+
+**Ubuntu / Debian Linux:**
+
+```bash
+sudo apt update
+sudo apt install python3.11 python3.11-venv python3-pip git
+python3.11 --version
+```
+
+On distributions that do not provide Python 3.11 through their default package repositories, install Python 3.11 using that distribution's recommended Python installation method.
+
+### 3. Create and activate a virtual environment
+
+Run these commands from the project root.
+
+**Windows PowerShell:**
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation, allow scripts for your current user, then activate again:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+.\.venv\Scripts\Activate.ps1
+```
+
+Alternatively, from Windows Command Prompt:
+
+```bat
+py -3.11 -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+**Linux:**
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+```
+
+When active, the environment name (usually `(.venv)`) appears in the terminal prompt. You can also check which Python is active:
+
+```bash
+python --version
+```
+
+### 4. Install the project dependencies
+
+With the virtual environment active, install uv and sync the locked project dependencies:
+
+```bash
+python -m pip install --upgrade pip uv
+uv sync --frozen
+```
+
+`uv sync --frozen` installs the dependencies recorded in `uv.lock` without changing the lock file. This includes PyTorch, torchvision, NumPy, Pillow, Albumentations, and the other project dependencies. It can take a while because PyTorch is a large package.
+
+If your network or organization blocks access to the PyTorch CUDA 12.1 package index, the dependency sync will fail while downloading PyTorch or torchvision. Use the [official PyTorch installation selector](https://pytorch.org/get-started/locally/) to choose a build appropriate for your operating system and CPU/GPU, then install the remaining project dependencies from `pyproject.toml`. Keep the installed `torch` and `torchvision` versions compatible.
+
+### 5. Check that the checkpoint and dependencies are available
+
+Ensure that `best_model.pt` is in the same project folder as `app.py`. The server loads it when it starts and will report an error if the checkpoint is missing or incompatible.
+
+With the virtual environment still active, verify the key imports and the checkpoint:
+
+```bash
+python -c "import torch, torchvision, albumentations, numpy, PIL; print('PyTorch:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
+```
+
+The printed `CUDA available` value can be `False`; CPU inference is supported.
+
+### 6. Start the local web server
+
+From the project root, with the virtual environment active, run:
+
+**Windows PowerShell or Command Prompt:**
+
+```powershell
+python app.py
+```
+
+**Linux:**
+
+```bash
+python app.py
+```
+
+Keep this terminal open while using the demo. On successful startup, the server prints that it is running at `http://127.0.0.1:8000` and indicates whether it selected the CPU or CUDA device. To stop it, press **Ctrl+C** in that terminal.
+
+If port 8000 is already in use, stop the other local service using that port before starting this server.
+
+### 7. Open the interface and make a prediction
+
+On the same computer, open this address in a browser:
+
+[http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+For Windows Subsystem for Linux (WSL), run `python app.py` inside the WSL project directory and open `http://127.0.0.1:8000` in your Windows browser. Recent WSL versions forward localhost automatically.
+
+In the page:
+
+1. Choose a fluorescence image using **Click to choose an image**. On supported mobile browsers, the image picker may offer the photo gallery or camera.
+2. Check the preview.
+3. Select **Predict image** and wait for the result.
+4. Read the predicted class and confidence percentage. Select another image to run another prediction without refreshing the page.
+
+The browser sends the file to the local server at `POST /predict` as `multipart/form-data`. Do not open `index.html` directly from the filesystem (`file://`); that bypasses the server and the prediction request cannot reach `/predict`.
+
+### 8. Stop the server and leave the environment
+
+Press **Ctrl+C** in the server terminal. To deactivate the virtual environment when you are done:
+
+```bash
+deactivate
+```
+
+Next time, open a terminal in the project folder, activate `.venv` using the Windows or Linux command above, and run `python app.py` again.
+
+### Troubleshooting
+
+| Problem | What to check |
+|---|---|
+| `python` or `py` is not found | Install Python 3.11 and reopen the terminal. On Windows, use `py -3.11`; on Linux, use `python3.11`. |
+| `No module named venv` on Linux | Install the matching `python3.11-venv` system package, then recreate the environment. |
+| `No module named torch` or another missing package | Activate `.venv` in the current terminal and run `uv sync --frozen` again. |
+| PyTorch/torchvision download fails | Check network access to PyPI and the configured PyTorch CUDA 12.1 index. If unavailable, install a matching PyTorch/torchvision build via the official selector and resolve remaining project dependencies. |
+| Checkpoint not found | Put `best_model.pt` beside `app.py`; start the server from the project root. |
+| Browser cannot connect | Confirm that `python app.py` is still running and open `http://127.0.0.1:8000`, not the HTML file directly. |
+| Port 8000 is occupied | Stop the process using port 8000, then restart the server. |
+| Prediction returns an error for an image | Select a supported, readable image file and keep the upload below the server's 20 MB limit. |
