@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7f3">
+    <meta name="description" content="A simple image classification demo. Upload an image to see the model's prediction.">
+    <title>Image Classifier — Model Demo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Image Classifier home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <path d="m5 17 5-5 3.5 3.5 2.5-2.5 3 3"></path>
+            </svg>
+          </span>
+          <span>Image Classifier</span>
+        </a>
+        <span class="demo-badge"><span></span> MODEL DEMO</span>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">IMAGE CLASSIFICATION</p>
+        <h1 id="page-title">See what the model sees.</h1>
+        <p class="intro-copy">Upload an image and let the model classify it in seconds.</p>
+      </section>
+
+      <form class="classifier-card" id="predict-form" novalidate>
+        <section class="workflow-step" aria-labelledby="upload-heading">
+          <div class="step-heading">
+            <span class="step-number">01</span>
+            <div>
+              <h2 id="upload-heading">Upload an image</h2>
+              <p>Choose an image from your device to get started.</p>
+            </div>
+          </div>
+
+          <label class="upload-area" id="upload-area" for="image-input">
+            <input id="image-input" name="image" type="file" accept="image/*">
+            <span class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"></path>
+                <path d="M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3"></path>
+              </svg>
+            </span>
+            <span class="upload-title">Click to choose an image</span>
+            <span class="upload-hint">JPG, PNG, WEBP, or another image format</span>
+          </label>
+          <p class="file-name" id="file-name" hidden></p>
+          <p class="message message-error" id="upload-error" role="alert" hidden></p>
+        </section>
+
+        <section class="workflow-step preview-step" aria-labelledby="preview-heading">
+          <div class="step-heading">
+            <span class="step-number">02</span>
+            <div>
+              <h2 id="preview-heading">Preview</h2>
+              <p>Make sure this is the image you want to classify.</p>
+            </div>
+          </div>
+          <div class="preview-frame" id="preview-frame">
+            <div class="preview-empty" id="preview-empty">
+              <span class="preview-empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <rect x="3.5" y="4" width="17" height="16" rx="2.5"></rect>
+                  <circle cx="9" cy="9.5" r="1.5"></circle>
+                  <path d="m4 17 5-5 3.5 3.5 2.5-2.5 5 5"></path>
+                </svg>
+              </span>
+              <span>Your image preview will appear here</span>
+            </div>
+            <img id="image-preview" alt="Selected image preview" hidden>
+          </div>
+        </section>
+
+        <section class="workflow-step predict-step" aria-labelledby="predict-heading">
+          <div class="step-heading">
+            <span class="step-number">03</span>
+            <div>
+              <h2 id="predict-heading">Run prediction</h2>
+              <p>The model will return its best-matching class.</p>
+            </div>
+          </div>
+          <button class="predict-button" id="predict-button" type="submit" disabled>
+            <span class="button-spinner" aria-hidden="true"></span>
+            <span class="button-label">Predict image</span>
+            <svg class="button-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 10h12m-5-5 5 5-5 5"></path>
+            </svg>
+          </button>
+          <p class="message message-error api-error" id="api-error" role="alert" hidden></p>
+        </section>
+
+        <section class="result-section" id="result-section" aria-labelledby="result-heading" aria-live="polite" hidden>
+          <div class="result-topline">
+            <span class="result-check" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none"><path d="m5 10 3.2 3.2L15.5 6"></path></svg>
+            </span>
+            <h2 id="result-heading">Prediction complete</h2>
+            <span class="result-status">RESULT</span>
+          </div>
+          <div class="result-details">
+            <div class="class-result">
+              <span class="result-label">PREDICTED CLASS</span>
+              <p id="predicted-class">—</p>
+            </div>
+            <div class="confidence-result">
+              <span class="result-label">CONFIDENCE</span>
+              <p id="confidence-value">—</p>
+              <div class="confidence-track" aria-hidden="true">
+                <span id="confidence-bar"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </form>
+
+      <footer class="page-footer">
+        <span>Powered by a custom image classification model</span>
+        <span class="footer-dot" aria-hidden="true"></span>
+        <span>Inference demo</span>
+      </footer>
+    </main>
+  </body>
+</html>
