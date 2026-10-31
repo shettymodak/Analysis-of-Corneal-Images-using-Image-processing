@@ -6,6 +6,16 @@ This project explores whether a convolutional neural network can distinguish cel
 
 The goal is to demonstrate a small, end-to-end image-classification workflow: prepare a dataset, train and evaluate a model on held-out real images, and try individual images through a browser demo.
 
+## Latest updates
+
+Recent changes expand the project beyond a simple classifier into a more complete microscopy-analysis workflow:
+
+- The browser demo now includes a modern upload/preview/prediction flow with clear step markers, file validation, and inline error states.
+- After a prediction, the UI shows a segmentation overlay for the uploaded image instead of only a class label.
+- The segmentation output highlights nuclei in blue, tubulin structures in red/yellow, and branch points in white, with the corresponding measurements rendered directly in the page.
+- The backend returns the overlay and measurement metrics in a single JSON response so the page can update the results without reloading.
+- The project documentation now reflects this hybrid workflow: neural-network classification plus heuristic segmentation and morphological measurements.
+
 ## Example images
 
 The following project images illustrate the three labels used by the classifier:
@@ -33,7 +43,21 @@ Softmax scores for control / recovery / stress
 Highest-scoring class and confidence
 ```
 
-The neural network is a **three-way image classifier**, not an object detector or a learned segmentation model. The browser demo also runs the channel-based segmentation utilities in `segment.py` to show nuclei and tubulin structures with per-image measurements; these heuristic measurements are separate from the classifier prediction.
+The neural network is a **three-way image classifier**, not an object detector or a learned segmentation model. The current workflow is a hybrid pipeline: the model predicts the cell state, and the browser demo also runs the channel-based segmentation utilities in `segment.py` to generate an overlay and per-image measurements. The segmentation step is intended to help inspect the microtubule network and nuclei, but those measurements remain heuristic image features rather than validated biological or clinical results.
+
+```text
+Fluorescence image
+       ↓
+Resize and normalize
+       ↓
+ResNet18 inference
+       ↓
+Softmax scores for control / recovery / stress
+       ↓
+Predicted class + confidence
+       ↓
+Segmentation overlay + nuclei / tubulin measurements
+```
 
 ## Dataset and preparation
 
@@ -146,7 +170,16 @@ These numbers describe one small held-out split, not a guarantee of performance 
 
 ## Try the browser demo
 
-The browser interface lets you select an image, preview it, and request a prediction without refreshing the page. It sends the image as `multipart/form-data` to `POST /predict`. The local server loads `best_model.pt`, preprocesses the image using the evaluation transform, runs inference, and applies `segment.py` to the original RGB image. The page shows the class and confidence, a color segmentation overlay, and nuclei, tubulin network length, branch-point, fragment, and coverage measurements.
+The browser interface has been updated to support a fuller microscopy-analysis workflow: users can upload an image, review a live preview, trigger inference, and immediately inspect the results in the same page without a refresh. It sends the image as `multipart/form-data` to `POST /predict`. The local server loads `best_model.pt`, preprocesses the image using the evaluation transform, runs the classifier, and applies `segment.py` to the original RGB image to generate a structure overlay and measurements.
+
+The UI now includes:
+
+- a drag-and-drop upload area with validation and inline error messages
+- a preview panel that shows the selected image before inference
+- a step-based action flow for upload, preview, and prediction
+- a results panel with predicted class, confidence percentage, and progress bar
+- an inline segmentation display showing nuclei, tubulin structures, and branch points
+- measurement tiles for nuclei count, network length, branch points, fragments, and tubulin coverage
 
 From the project directory, start the server:
 
