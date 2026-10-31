@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 import logging
@@ -16,6 +17,7 @@ from PIL import Image, UnidentifiedImageError
 from torchvision import models
 
 from config import CLASSES, IMG_SIZE
+from segment import make_overlay
 
 
 ROOT = Path(__file__).resolve().parent
@@ -125,7 +127,8 @@ class DemoHandler(SimpleHTTPRequestHandler):
             image_bytes = image_part.get_payload(decode=True)
             with Image.open(io.BytesIO(image_bytes)) as image:
                 rgb_image = image.convert("RGB")
-                tensor = EVAL_TRANSFORM(image=np.asarray(rgb_image))["image"].unsqueeze(0).to(DEVICE)
+                image_array = np.asarray(rgb_image).copy()
+                tensor = EVAL_TRANSFORM(image=image_array)["image"].unsqueeze(0).to(DEVICE)
         except (UnidentifiedImageError, OSError, ValueError):
             send_json(self, 400, {"error": "The uploaded file is not a valid image."})
             return
@@ -138,14 +141,34 @@ class DemoHandler(SimpleHTTPRequestHandler):
             with torch.inference_mode():
                 probabilities = torch.softmax(MODEL(tensor), dim=1)[0]
             confidence, index = probabilities.max(dim=0)
+            overlay, stats = make_overlay(image_array.astype(np.float32) / 255.0)
+            overlay_buffer = io.BytesIO()
+            Image.fromarray(np.rint(overlay * 255).astype(np.uint8)).save(
+                overlay_buffer,
+                format="PNG",
+            )
             send_json(
                 self,
                 200,
-                {"class": MODEL_CLASSES[index.item()], "confidence": confidence.item()},
+                {
+                    "class": MODEL_CLASSES[index.item()],
+                    "confidence": confidence.item(),
+                    "overlay": "data:image/png;base64,"
+                    + base64.b64encode(overlay_buffer.getvalue()).decode("ascii"),
+                    "nuclei": stats["n_nuclei"],
+                    "network_length": stats["network_length_px"],
+                    "branch_points": stats["branch_points"],
+                    "fragments": stats["fragments"],
+                    "tubulin_coverage": stats["tubulin_coverage"],
+                },
             )
         except Exception:
-            logging.exception("Model inference failed")
-            send_json(self, 500, {"error": "The model could not complete this prediction."})
+            logging.exception("Prediction or segmentation failed")
+            send_json(
+                self,
+                500,
+                {"error": "The model could not complete this prediction and segmentation."},
+            )
 
     def log_message(self, format_string, *args):
         logging.info("%s - %s", self.address_string(), format_string % args)

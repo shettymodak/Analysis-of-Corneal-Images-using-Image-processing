@@ -33,7 +33,7 @@ Softmax scores for control / recovery / stress
 Highest-scoring class and confidence
 ```
 
-This is a **three-way image classifier**, not an object detector or a segmentation model. It assigns one label to the complete input image.
+The neural network is a **three-way image classifier**, not an object detector or a learned segmentation model. The browser demo also runs the channel-based segmentation utilities in `segment.py` to show nuclei and tubulin structures with per-image measurements; these heuristic measurements are separate from the classifier prediction.
 
 ## Dataset and preparation
 
@@ -146,7 +146,7 @@ These numbers describe one small held-out split, not a guarantee of performance 
 
 ## Try the browser demo
 
-The browser interface lets you select an image, preview it, and request a prediction without refreshing the page. It sends the image as `multipart/form-data` to `POST /predict`. The local server loads `best_model.pt`, preprocesses the image using the evaluation transform, runs inference, and returns a class and confidence value.
+The browser interface lets you select an image, preview it, and request a prediction without refreshing the page. It sends the image as `multipart/form-data` to `POST /predict`. The local server loads `best_model.pt`, preprocesses the image using the evaluation transform, runs inference, and applies `segment.py` to the original RGB image. The page shows the class and confidence, a color segmentation overlay, and nuclei, tubulin network length, branch-point, fragment, and coverage measurements.
 
 From the project directory, start the server:
 
@@ -161,11 +161,17 @@ The API response is:
 ```json
 {
   "class": "stress",
-  "confidence": 0.924
+  "confidence": 0.924,
+  "overlay": "data:image/png;base64,...",
+  "nuclei": 24,
+  "network_length": 3812,
+  "branch_points": 17,
+  "fragments": 8,
+  "tubulin_coverage": 0.173
 }
 ```
 
-The demo displays `0.924` as `92.4%`. Its API endpoint, multipart field name, and accepted class names are grouped at the top of `script.js`. The server expects the uploaded file under the `image` field.
+The demo displays `0.924` as `92.4%`. The overlay is returned inline as a PNG data URL, so concurrent requests do not overwrite a shared image file. Its API endpoint, multipart field name, and accepted class names are grouped at the top of `script.js`. The server expects the uploaded file under the `image` field. Segmentation measurements are heuristic image measurements, not validated biological or clinical results.
 
 ## Running the project scripts
 
@@ -180,6 +186,7 @@ The main scripts are:
 | `train.py` | Trains ResNet18 and saves the best validation checkpoint |
 | `test.py` | Evaluates the test split and demonstrates single-image prediction |
 | `app.py` | Serves the browser demo and handles `POST /predict` |
+| `segment.py` | Segments nuclei and tubulin structures and calculates overlay measurements |
 | `index.html`, `style.css`, `script.js` | Browser interface |
 
 Before running the data-preparation scripts, make sure the source and destination paths in `main.py` and `config.py` point to the intended dataset folders. The current project configuration uses a WSL-mounted Windows data path. A typical workflow is:
@@ -192,7 +199,7 @@ Before running the data-preparation scripts, make sure the source and destinatio
 .venv/bin/python test.py
 ```
 
-Training and evaluation require the prepared dataset at the configured path. The browser demo requires `best_model.pt`. `app.py` uses the project environment's PyTorch, torchvision, Albumentations, NumPy, and Pillow dependencies.
+Training and evaluation require the prepared dataset at the configured path. The browser demo requires `best_model.pt`. `app.py` also needs the dependencies used by `segment.py`, including scikit-image, SciPy, and Matplotlib.
 
 ## Limitations and next steps
 

@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f5f7f3">
-    <meta name="description" content="A simple image classification demo. Upload an image to see the model's prediction.">
-    <title>Image Classifier — Model Demo</title>
+    <meta name="description" content="Classify a fluorescence microscopy image and view its segmented cell structures.">
+    <title>Cell Image Analysis — Model Demo</title>
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
   </head>
@@ -20,15 +20,15 @@
               <path d="m5 17 5-5 3.5 3.5 2.5-2.5 3 3"></path>
             </svg>
           </span>
-          <span>Image Classifier</span>
+          <span>Cell Image Analysis</span>
         </a>
         <span class="demo-badge"><span></span> MODEL DEMO</span>
       </header>
 
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">IMAGE CLASSIFICATION</p>
+        <p class="eyebrow">FLUORESCENCE IMAGE ANALYSIS</p>
         <h1 id="page-title">See what the model sees.</h1>
-        <p class="intro-copy">Upload an image and let the model classify it in seconds.</p>
+        <p class="intro-copy">Classify an image and inspect the segmented cell structures.</p>
       </section>
 
       <form class="classifier-card" id="predict-form" novalidate>
@@ -118,6 +118,39 @@
               </div>
             </div>
           </div>
+          <section class="segmentation-result" aria-labelledby="segmentation-heading">
+            <div class="segmentation-heading">
+              <div>
+                <h3 id="segmentation-heading">Segmented structures</h3>
+                <p>Blue outlines nuclei; red and yellow show tubulin, with white branch points.</p>
+              </div>
+            </div>
+            <div class="overlay-frame">
+              <img id="segmentation-overlay" alt="Segmented overlay of the uploaded image">
+            </div>
+            <div class="measurement-grid" aria-label="Segmentation measurements">
+              <div class="measurement-card">
+                <span class="result-label">NUCLEI</span>
+                <p id="nuclei-count">—</p>
+              </div>
+              <div class="measurement-card">
+                <span class="result-label">NETWORK LENGTH</span>
+                <p><span id="network-length">—</span> <small>px</small></p>
+              </div>
+              <div class="measurement-card">
+                <span class="result-label">BRANCH POINTS</span>
+                <p id="branch-points">—</p>
+              </div>
+              <div class="measurement-card">
+                <span class="result-label">FRAGMENTS</span>
+                <p id="fragment-count">—</p>
+              </div>
+              <div class="measurement-card">
+                <span class="result-label">TUBULIN COVERAGE</span>
+                <p id="tubulin-coverage">—</p>
+              </div>
+            </div>
+          </section>
         </section>
       </form>
 

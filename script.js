@@ -18,6 +18,12 @@ const resultSection = document.querySelector("#result-section");
 const predictedClass = document.querySelector("#predicted-class");
 const confidenceValue = document.querySelector("#confidence-value");
 const confidenceBar = document.querySelector("#confidence-bar");
+const segmentationOverlay = document.querySelector("#segmentation-overlay");
+const nucleiCount = document.querySelector("#nuclei-count");
+const networkLength = document.querySelector("#network-length");
+const branchPoints = document.querySelector("#branch-points");
+const fragmentCount = document.querySelector("#fragment-count");
+const tubulinCoverage = document.querySelector("#tubulin-coverage");
 
 let selectedFile = null;
 let previewUrl = null;
@@ -33,6 +39,12 @@ function clearResult() {
   predictedClass.textContent = "—";
   confidenceValue.textContent = "—";
   confidenceBar.style.width = "0";
+  segmentationOverlay.removeAttribute("src");
+  nucleiCount.textContent = "—";
+  networkLength.textContent = "—";
+  branchPoints.textContent = "—";
+  fragmentCount.textContent = "—";
+  tubulinCoverage.textContent = "—";
 }
 
 function resetPreview() {
@@ -158,7 +170,21 @@ form.addEventListener("submit", async (event) => {
       typeof result.confidence !== "number" ||
       !Number.isFinite(result.confidence) ||
       result.confidence < 0 ||
-      result.confidence > 1
+      result.confidence > 1 ||
+      typeof result.overlay !== "string" ||
+      !result.overlay.startsWith("data:image/png;base64,") ||
+      !Number.isSafeInteger(result.nuclei) ||
+      result.nuclei < 0 ||
+      !Number.isSafeInteger(result.network_length) ||
+      result.network_length < 0 ||
+      !Number.isSafeInteger(result.branch_points) ||
+      result.branch_points < 0 ||
+      !Number.isSafeInteger(result.fragments) ||
+      result.fragments < 0 ||
+      typeof result.tubulin_coverage !== "number" ||
+      !Number.isFinite(result.tubulin_coverage) ||
+      result.tubulin_coverage < 0 ||
+      result.tubulin_coverage > 1
     ) {
       throw new Error("The prediction service returned an unexpected result. Please check the API response format.");
     }
@@ -167,6 +193,12 @@ form.addEventListener("submit", async (event) => {
     predictedClass.textContent = result.class;
     confidenceValue.textContent = `${percentage.toFixed(1)}%`;
     confidenceBar.style.width = `${percentage}%`;
+    segmentationOverlay.src = result.overlay;
+    nucleiCount.textContent = result.nuclei.toLocaleString();
+    networkLength.textContent = result.network_length.toLocaleString();
+    branchPoints.textContent = result.branch_points.toLocaleString();
+    fragmentCount.textContent = result.fragments.toLocaleString();
+    tubulinCoverage.textContent = `${(result.tubulin_coverage * 100).toFixed(1)}%`;
     resultSection.hidden = false;
   } catch (error) {
     setMessage(
